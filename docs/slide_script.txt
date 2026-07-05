@@ -1,0 +1,61 @@
+SPEAKER SCRIPT — Qwen3.6-27B QLoRA Fine-Tune: Training Progress
+================================================================
+Prepared: 2026-07-05
+
+SLIDE 1 — Title
+---------------
+"This is a progress report on a live fine-tuning run for Qwen 3.6 — Alibaba's
+27-billion-parameter language model. We're adapting it to financial language
+using a technique called QLoRA, which lets us train a model this size on a
+single consumer-accessible GPU. The training data is drawn from half a million
+real financial text examples. Everything you're seeing in these slides reflects
+where the run stands today."
+
+SLIDE 2 — Model & Infrastructure
+---------------------------------
+"On the left are the model specifics. We're running 4-bit quantized LoRA — the
+base model weights are frozen and compressed to 4 bits, and we're only training
+a small set of adapter layers. LoRA rank 64 means we're adding roughly 40
+million trainable parameters on top of 27 billion frozen ones. On the right is
+the infrastructure stack: Google Colab's A100 high-memory tier, checkpoints
+synced live to Google Drive, and the codebase tracked on GitHub. The entire
+pipeline is designed to survive VM resets — if Colab drops the connection, we
+resume from the last checkpoint."
+
+SLIDE 3 — Training Timeline
+----------------------------
+"We're running in 3,000-step chunks — each chunk takes roughly 4 to 5 hours on
+the A100. After every chunk, we run a full evaluation suite before committing
+to the next one. Green nodes are complete. We're currently sitting at checkpoint
+21,500, which is about 29% through a full epoch on the dataset. The remaining
+4 chunks will take us to 32,750 steps — the planned end of training."
+
+SLIDE 4 — Evaluation Pipeline
+------------------------------
+"After each chunk we run five checks before we're allowed to continue. First
+is the WRDS holdout — 200 examples held out from the training corpus that test
+in-domain accuracy. Then five public finance NLP benchmarks. Then JSON format
+validation — our model is trained to output structured data, so we check field
+compliance. Then a base model versus adapter comparison to catch hallucination
+regressions. Only if everything clears do we get a GO signal for the next chunk.
+The current chunk 4 eval is running right now as we speak."
+
+SLIDE 5 — Benchmark Coverage
+-----------------------------
+"The five public benchmarks span different dimensions of financial language
+understanding. FPB is sentence-level sentiment on analyst phrases. FIQA is
+opinion mining and question answering. TFNS captures social media financial
+sentiment from Twitter. NWGI tests intent classification on financial news.
+And Headline covers commodity-related news with structured feature extraction.
+Each gets 200 examples in non-thinking mode — we run greedy decoding to keep
+results deterministic and comparable across checkpoints."
+
+SLIDE 6 — Next Steps
+---------------------
+"The decision tree is simple. If all five checks pass, we launch chunk 5
+immediately — steps 21,500 to 24,500. If anything regresses, we have four
+levers: cut the learning rate in half, reduce the LoRA rank, mix in
+general-domain examples to stabilize, or shorten the chunk length. We do not
+push to Hugging Face until the full run completes and we've reviewed the final
+eval suite. The model will be published only after a deliberate go/no-go
+decision on the complete checkpoint."
